@@ -2,8 +2,10 @@
 
 set -u
 
-script_dir="${0:A:h}"
-repo_root="${script_dir:h}"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
+
+common_script_dir="${0:A:h}"
+repo_root="${common_script_dir:h:h}"
 chezmoi_source="${repo_root}/chezmoi"
 backup_root="${HOME}/.local/state/mac-config-sync/backups"
 
@@ -58,13 +60,13 @@ choose_conflict_action() {
 }
 
 expand_home() {
-  local path="$1"
-  print -- "${path/#\~/${HOME}}"
+  local file_path="$1"
+  print -- "${file_path/#\~/${HOME}}"
 }
 
 ensure_parent_dir() {
-  local path="$1"
-  mkdir -p "${path:h}"
+  local file_path="$1"
+  mkdir -p "${file_path:h}"
 }
 
 looks_sensitive_or_org() {
@@ -81,7 +83,7 @@ template_home_paths() {
 
 run_chezmoi() {
   require_command chezmoi
-  chezmoi --source="$chezmoi_source" "$@"
+  chezmoi --source="$chezmoi_source" --destination="$HOME" "$@"
 }
 
 backup_file() {

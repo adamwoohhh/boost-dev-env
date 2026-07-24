@@ -2,8 +2,8 @@
 
 set -u
 
-script_dir="${0:A:h}"
-source "${script_dir}/lib/common.zsh"
+entry_script_dir="${0:A:h}"
+source "${entry_script_dir}/lib/common.zsh"
 
 require_command awk
 require_command sed
@@ -60,7 +60,8 @@ capture_zsh() {
     awk '
       /byted|byt|bnpm|DevEco|HarmonyOS|HDC_SERVER_PORT|OHPM_HOME|token|secret|password|_authToken/ {next}
       {print}
-    ' "$zprofile" | sed "s#${HOME}#{{ .chezmoi.homeDir }}#g" > "$target_zprofile"
+    ' "$zprofile" | sed "s#${HOME}#{{ .chezmoi.homeDir }}#g; s#\"export HOMEBREW_AUTO_UPDATE_SECS#\"\\
+export HOMEBREW_AUTO_UPDATE_SECS#g" > "$target_zprofile"
   fi
 
   if [ -f "$zshrc" ]; then
@@ -70,7 +71,8 @@ capture_zsh() {
       /NVM_DIR|\.nvm|nvm\.sh|bash_completion/ {next}
       /BUN_INSTALL|\.bun|bun completions/ {next}
       {print}
-    ' "$zshrc" | sed "s#${HOME}#{{ .chezmoi.homeDir }}#g" > "$target_zshrc"
+    ' "$zshrc" | sed "s#${HOME}#{{ .chezmoi.homeDir }}#g; s#\"export HOMEBREW_AUTO_UPDATE_SECS#\"\\
+export HOMEBREW_AUTO_UPDATE_SECS#g" > "$target_zshrc"
   fi
 
   if { [ -f "$target_zprofile" ] && looks_sensitive_or_org "$target_zprofile"; } ||
@@ -181,8 +183,13 @@ info "Captured: ${captured[*]:-none}"
 info "Skipped: ${skipped[*]:-none}"
 
 print -- ""
-info "Chezmoi source diff:"
-run_chezmoi diff || true
+info "Repository diff:"
+if git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$repo_root" status --short -- chezmoi config scripts docs README.md || true
+  git -C "$repo_root" diff -- chezmoi config scripts docs README.md || true
+else
+  find "$chezmoi_source" -type f -print
+fi
 
 print -- ""
 info "Review the repository changes, then commit and push manually."

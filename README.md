@@ -58,6 +58,20 @@ Backups are stored under:
 ~/.local/state/mac-config-sync/backups/
 ```
 
+Preview without writing files:
+
+```sh
+./scripts/apply.zsh --dry-run
+```
+
+Dry-run mode renders templates, reports missing software, and shows diffs for existing target files. It does not write files, create backups, or open a merge tool.
+
+For non-interactive dry-run tests, provide the Git email template value:
+
+```sh
+MAC_CONFIG_SYNC_EMAIL=test@example.invalid ./scripts/apply.zsh --dry-run
+```
+
 ## First-Version Scope
 
 Included:

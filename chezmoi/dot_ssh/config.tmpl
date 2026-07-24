@@ -1,0 +1,14 @@
+Host myberry.local
+    HostName myberry.local
+    User pi
+
+Host github.com
+    HostName ssh.github.com
+    Port 443
+    User git
+    IdentityFile ~/.ssh/id_ed25519_gh
+
+
+Host *
+    GSSAPIAuthentication yes
+    GSSAPIDelegateCredentials no

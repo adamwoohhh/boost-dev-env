@@ -1,0 +1,27 @@
+# Conservative defaults for a comfortable macOS terminal.
+# Open with Cmd+, in Ghostty, edit, then reload with Cmd+Shift+,.
+
+font-family = Menlo
+font-size = 14
+
+theme = Dracula+
+background-opacity = 0.96
+background-blur = false
+
+window-padding-x = 8
+window-padding-y = 6
+window-save-state = always
+window-new-tab-position = end
+macos-titlebar-style = transparent
+macos-option-as-alt = true
+
+copy-on-select = false
+clipboard-read = ask
+clipboard-write = allow
+clipboard-paste-protection = true
+
+shell-integration = detect
+shell-integration-features = cursor,title,no-sudo
+confirm-close-surface = true
+mouse-hide-while-typing = true
+scrollback-limit = 10000000

@@ -2,16 +2,61 @@
 
 set -u
 
-script_dir="${0:A:h}"
-source "${script_dir}/lib/common.zsh"
+entry_script_dir="${0:A:h}"
+source "${entry_script_dir}/lib/common.zsh"
 
 require_command chezmoi
 require_command diff
+
+dry_run=false
+for arg in "$@"; do
+  case "$arg" in
+    -n|--dry-run)
+      dry_run=true
+      ;;
+    -h|--help)
+      print -- "Usage: ./scripts/apply.zsh [--dry-run]"
+      print -- ""
+      print -- "Apply accepted configuration. In dry-run mode, render templates,"
+      print -- "show diffs and missing software, but do not write files, back up,"
+      print -- "or open merge tools."
+      exit 0
+      ;;
+    *)
+      die "unknown argument: ${arg}"
+      ;;
+  esac
+done
 
 run_id="$(date +%Y%m%d-%H%M%S)"
 applied=()
 skipped=()
 missing=()
+template_email=""
+template_data_args=()
+
+json_escape() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  print -- "$value"
+}
+
+prepare_template_data() {
+  [ -f "${chezmoi_source}/dot_gitconfig.tmpl" ] || return 0
+
+  if [ "$dry_run" = true ]; then
+    template_email="${MAC_CONFIG_SYNC_EMAIL:-dry-run@example.invalid}"
+  else
+    printf "Git email: "
+    read -r template_email
+    [ -n "$template_email" ] || die "Git email is required for dot_gitconfig.tmpl"
+  fi
+
+  local escaped_email
+  escaped_email="$(json_escape "$template_email")"
+  template_data_args=(--override-data "{\"email\":\"${escaped_email}\"}")
+}
 
 targets_for() {
   local name="$1"
@@ -41,7 +86,7 @@ source_paths_for() {
 
 render_source() {
   local source_path="$1"
-  run_chezmoi execute-template --init < "${chezmoi_source}/${source_path}"
+  run_chezmoi execute-template "${template_data_args[@]}" < "${chezmoi_source}/${source_path}"
 }
 
 merge_target() {
@@ -60,11 +105,17 @@ handle_target_conflict() {
   render_source "$source_path" > "$desired"
 
   if [ ! -e "$target" ]; then
+    if [ "$dry_run" = true ]; then
+      info "DRY-RUN: would create ${target}"
+      rm -f "$desired"
+      return 2
+    fi
     rm -f "$desired"
     return 0
   fi
 
   if cmp -s "$target" "$desired"; then
+    info "No change for ${target}"
     rm -f "$desired"
     return 2
   fi
@@ -72,6 +123,12 @@ handle_target_conflict() {
   print -- ""
   print -- "Diff for ${target}:"
   diff -u "$target" "$desired" || true
+
+  if [ "$dry_run" = true ]; then
+    info "DRY-RUN: would ask whether to skip, replace with backup, or merge ${target}"
+    rm -f "$desired"
+    return 2
+  fi
 
   local action
   action="$(choose_conflict_action "$target")"
@@ -120,7 +177,11 @@ apply_one() {
     local conflict_result=$?
     case "$conflict_result" in
       0)
-        run_chezmoi apply --init --include=files "$target"
+        if [ "$dry_run" = true ]; then
+          info "DRY-RUN: would apply ${target}"
+        else
+          run_chezmoi apply "${template_data_args[@]}" --include=files "$target"
+        fi
         did_apply=true
         ;;
       1)
@@ -140,12 +201,21 @@ apply_one() {
   fi
 }
 
-info "Applying configuration from ${chezmoi_source}"
+if [ "$dry_run" = true ]; then
+  info "Dry-running configuration from ${chezmoi_source}"
+else
+  info "Applying configuration from ${chezmoi_source}"
+fi
+prepare_template_data
 for name in "${accepted_names[@]}"; do
   apply_one "$name"
 done
 
 print -- ""
-info "Applied: ${applied[*]:-none}"
+if [ "$dry_run" = true ]; then
+  info "Would apply: ${applied[*]:-none}"
+else
+  info "Applied: ${applied[*]:-none}"
+fi
 info "Skipped: ${skipped[*]:-none}"
 info "Missing software: ${missing[*]:-none}"
