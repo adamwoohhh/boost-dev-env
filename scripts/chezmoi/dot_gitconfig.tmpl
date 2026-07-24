@@ -1,0 +1,50 @@
+# Managed personal Git configuration.
+# Organization config, credentials, safe.directory, and Git LFS filters are excluded.
+
+[user]
+    name = wuyafeng.adam
+
+[alias]
+    s = status
+
+[alias]
+    a = !git add . && git status
+
+[alias]
+    cm = commit -m
+
+[alias]
+    amend = commit --amend
+
+[alias]
+    ck = checkout
+
+[alias]
+    rr = !git fetch origin && git rebase origin/master
+
+[alias]
+    up = !git pull origin $(git branch --show-current)
+
+[alias]
+    pu = !git push origin $(git branch --show-current)
+
+[alias]
+    pua = !git push origin --tags
+
+[pull]
+    ff = only
+
+[pull]
+    rebase = true
+
+[oh-my-zsh]
+    hide-dirty = 1
+
+[oh-my-zsh]
+    hide-status = 1
+
+[fetch]
+    prune = true
+
+[user]
+    email = {{ .email | quote }}

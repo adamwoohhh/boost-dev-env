@@ -61,9 +61,9 @@ The `capture.zsh` and `apply.zsh` scripts use `#!/bin/zsh` shebangs and can be e
 6. Apply accepted changes through chezmoi.
 7. Report applied, skipped, missing-software, and conflict outcomes.
 
-## Open Design Questions
+## Implementation Decisions
 
-- What language should the orchestration tool use?
-- Which exact repository layout should wrap chezmoi source state?
-- How should software installation detection work for GUI apps and CLI tools?
-- Which external merge tools should be supported by default?
+- The orchestration tool is implemented as `zsh` scripts with `#!/bin/zsh` shebangs.
+- `chezmoi/` contains the source state that maps to user-home target files.
+- CLI availability is detected with `command -v`; Ghostty availability is detected through common `.app` locations.
+- Merge conflicts use an external merge tool selected from `MERGE_TOOL`, `VISUAL`, `EDITOR`, or `vimdiff`.

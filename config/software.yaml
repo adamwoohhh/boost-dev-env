@@ -1,0 +1,30 @@
+software:
+  ghostty:
+    label: Ghostty
+    target: ~/.config/ghostty/config
+    source: chezmoi/dot_config/ghostty/config
+    detect:
+      - /Applications/Ghostty.app
+      - ~/Applications/Ghostty.app
+  zsh:
+    label: Zsh
+    targets:
+      - ~/.zshrc
+      - ~/.zprofile
+    sources:
+      - chezmoi/dot_zshrc.tmpl
+      - chezmoi/dot_zprofile.tmpl
+    detect:
+      - command:zsh
+  git:
+    label: Git
+    target: ~/.gitconfig
+    source: chezmoi/dot_gitconfig.tmpl
+    detect:
+      - command:git
+  ssh:
+    label: SSH
+    target: ~/.ssh/config
+    source: chezmoi/dot_ssh/config.tmpl
+    detect:
+      - command:ssh
